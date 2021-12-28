@@ -1,17 +1,27 @@
-const server = require('http').createServer()
+const express = require('express')
+const app = express()
+
+const server = require('http').createServer(app)
 const mongoose = require('mongoose')
 require('dotenv/config')
 
+
 const ChatModel = require('./Models/ChatModel')
+const User = require('./Models/User')
+
+const userRoutes = require('./routes/user')
+
+const PORT = process.env.PORT || 3000
 
 mongoose.connect(process.env.DB_CONNECTION,
-    { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
+    { useNewUrlParser: true, useUnifiedTopology: true,useFindAndModify:false }, (err) => {
         if (err == null)
             console.log('Connceted to DB!')
         else
             console.error(err)
     })
-
+//hide the deprecation warning
+mongoose.set('useCreateIndex', true);
 io = require('socket.io')(server, {
     cors: {
         origin: "*",
@@ -19,7 +29,31 @@ io = require('socket.io')(server, {
     }
 })
 
-const PORT = process.env.PORT || 3000
+
+//express middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
+    res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Auth-Token')
+    next()
+})
+app.use(express.json())
+app.use('/user', userRoutes)
+//save user to DB
+app.post('/register', async (req, res) => {
+    // const { uid, username, email, emailVerified, phone, photoUrl, localId, metadata, disabled, providerData } = req.body
+    const user = new User(req.body)
+    try {
+        await user.save()
+        console.log('user saved ', user)
+        res.send(user)
+    } catch (err) {
+        if (err.code == 11000)
+            res.status(400).send('User already exists')
+        else
+            res.status(500).send(err)
+    }
+})
 
 const msgsData = []
 
@@ -29,10 +63,13 @@ io.on('connection', async (socket) => {
     socket.on('sendMsg', data => {
         // msgsData.push(data)
         appendMsgData(data)
-        
+
         //save received msg in DB then broadcast
         const newMsg = ChatModel(
-            { username: data.username, text: data.text[0] }
+            {
+                user: data.user, name: data.name,
+                text: data.text[0], photoURL: data.photoURL
+            }
         )
         newMsg.save((err, result) => {
             if (err) return
@@ -67,7 +104,7 @@ function appendMsgData(msgData) {
 
 function getPrevChatData() {
     return new Promise((resolve, reject) => {
-        ChatModel.find({}, async (err, result) => {
+        ChatModel.find({}).sort('timestamp').exec(async (err, result) => {
             if (err)
                 reject(err)
             else
