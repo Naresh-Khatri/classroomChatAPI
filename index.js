@@ -26,7 +26,8 @@ io = require('socket.io')(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
-    }
+    },
+    transports: ['websocket']
 })
 
 
@@ -73,7 +74,7 @@ io.on('connection', async (socket) => {
         )
         newMsg.save((err, result) => {
             if (err) return
-            io.emit('receiveMsg', result)
+            socket.broadcast.emit('receiveMsg', result)
         })
     })
 })
