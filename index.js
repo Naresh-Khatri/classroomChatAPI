@@ -14,7 +14,7 @@ const userRoutes = require('./routes/user')
 const PORT = process.env.PORT || 3000
 
 mongoose.connect(process.env.DB_CONNECTION,
-    { useNewUrlParser: true, useUnifiedTopology: true,useFindAndModify:false }, (err) => {
+    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }, (err) => {
         if (err == null)
             console.log('Connceted to DB!')
         else
@@ -61,6 +61,11 @@ const msgsData = []
 io.on('connection', async (socket) => {
     console.log('new user ' + socket.id)
     socket.emit('receivePrevMsgsData', await getPrevChatData())
+    //change typing status
+    socket.on('typing', (data) => {
+        socket.broadcast.emit('typing', data)
+    })
+    //send message
     socket.on('sendMsg', data => {
         // msgsData.push(data)
         appendMsgData(data)
@@ -105,7 +110,7 @@ function appendMsgData(msgData) {
 
 function getPrevChatData() {
     return new Promise((resolve, reject) => {
-        ChatModel.find({}).sort('timestamp').exec(async (err, result) => {
+        ChatModel.find({}).sort('timestamp').limit(25).exec(async (err, result) => {
             if (err)
                 reject(err)
             else
