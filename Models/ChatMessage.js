@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
+import mongoose from 'mongoose'
 
-const chatsDataSchema = mongoose.Schema({
+const chatMessageDataSchema = mongoose.Schema({
     user: {
         type: String,
         ref: 'User',
@@ -22,4 +22,5 @@ const chatsDataSchema = mongoose.Schema({
     }
 })
 
-module.exports = mongoose.model('Chat', chatsDataSchema)
+// module.exports = mongoose.model('ChatMessage', chatMessageDataSchema)
+export default mongoose.model('ChatMessage', chatMessageDataSchema)

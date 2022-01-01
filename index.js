@@ -1,16 +1,26 @@
-const express = require('express')
+import express from 'express'
 const app = express()
 
-const server = require('http').createServer(app)
-const mongoose = require('mongoose')
-require('dotenv/config')
+import http from 'http'
+const HttpServer = http.createServer(app)
+import mongoose from 'mongoose'
+
+import 'dotenv/config'
 
 
-const ChatModel = require('./Models/ChatModel')
-const User = require('./Models/User')
+import ChatModel from './Models/ChatMessage.js'
+import User from './Models/User.js'
 
-const userRoutes = require('./routes/user')
+import userRoutes from './routes/user.js'
 
+import { Server } from 'socket.io'
+const io = new Server(HttpServer, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    },
+    transports: ['websocket']
+})
 const PORT = process.env.PORT || 3000
 
 mongoose.connect(process.env.DB_CONNECTION,
@@ -22,13 +32,6 @@ mongoose.connect(process.env.DB_CONNECTION,
     })
 //hide the deprecation warning
 mongoose.set('useCreateIndex', true);
-io = require('socket.io')(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    },
-    transports: ['websocket']
-})
 
 
 //express middleware
@@ -83,7 +86,7 @@ io.on('connection', async (socket) => {
         })
     })
 })
-server.listen(PORT, () => {
+HttpServer.listen(PORT, () => {
     console.log(`Listening on http://localhost:${PORT}`)
 })
 
@@ -110,11 +113,16 @@ function appendMsgData(msgData) {
 
 function getPrevChatData() {
     return new Promise((resolve, reject) => {
-        ChatModel.find({}).sort('timestamp').limit(25).exec(async (err, result) => {
-            if (err)
-                reject(err)
-            else
-                resolve(result)
-        })
+        ChatModel
+            .find({})
+            .sort({ timestamp: 1 })
+            .exec(async (err, result) => {
+                if (err)
+                    reject(err)
+                else {
+                    // result.slice(-5).map(msg => console.log(msg.timestamp, msg.text))
+                    resolve(result.slice(-50))
+                }
+            })
     })
 }

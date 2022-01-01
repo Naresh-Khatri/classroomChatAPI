@@ -1,6 +1,6 @@
-const express = require('express')
+import express  from 'express'
 const router = express.Router()
-const User = require('../Models/User')
+import User  from '../Models/User.js'
 
 
 router.get('/', (req, res) => {
@@ -43,4 +43,5 @@ router.post('/changeBadges', async (req, res) => {
         }
     })
 })
-module.exports = router
+// module.exports = router
+export default router
