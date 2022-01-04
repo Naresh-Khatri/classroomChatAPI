@@ -1,11 +1,37 @@
-import express  from 'express'
+import express from 'express'
+import multer from 'multer'
+
+import User from '../Models/User.js'
+
 const router = express.Router()
-import User  from '../Models/User.js'
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './uploads')
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname + '-' + Date.now() + '.' + file.originalname.split('.')[1])
+    }
+})
+const upload = multer({ dest: 'uploads/', storage: storage })
 
+router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res, next) => {
+    try {
+        const user = await User.findOne({uid: req.body.uid})
+        user.customProfilePic = req.file.path;
+        await user.save()
+        console.log(req.file.path)
+        // const res = await User.findOneAndUpdate({ uid: req.body.uid },
+        //     { $set: { customProfilePic: req.file.path } })
 
-router.get('/', (req, res) => {
-    console.log('hi')
-    res.send('hello')
+    }
+    catch (err) {
+        console.log(err)
+    }
+    // console.log(req.file)
+    // const user = await User.findById(req.body.userId)
+    // user.profilePic = req.file.path
+    // await user.save()
+    res.send('done')
 })
 router.post('/getUser', async (req, res) => {
     try {
@@ -43,5 +69,6 @@ router.post('/changeBadges', async (req, res) => {
         }
     })
 })
+
 // module.exports = router
 export default router
