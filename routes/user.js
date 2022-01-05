@@ -9,28 +9,18 @@ const storage = multer.diskStorage({
         cb(null, './uploads')
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname + '-' + Date.now() + '.' + file.originalname.split('.')[1])
+        cb(null, file.originalname + '-' + Date.now() + '.' + file.originalname.split('.').slice(-1))
     }
 })
 const upload = multer({ dest: 'uploads/', storage: storage })
 
 router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res, next) => {
     try {
-        const user = await User.findOne({uid: req.body.uid})
-        user.customProfilePic = req.file.path;
-        await user.save()
-        console.log(req.file.path)
-        // const res = await User.findOneAndUpdate({ uid: req.body.uid },
-        //     { $set: { customProfilePic: req.file.path } })
-
+        await User.findOneAndUpdate({ uid: req.body.uid }, { customProfilePic: req.file.path })
     }
     catch (err) {
         console.log(err)
     }
-    // console.log(req.file)
-    // const user = await User.findById(req.body.userId)
-    // user.profilePic = req.file.path
-    // await user.save()
     res.send('done')
 })
 router.post('/getUser', async (req, res) => {
