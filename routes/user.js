@@ -1,5 +1,11 @@
+import fs from 'fs'
+
 import express from 'express'
 import multer from 'multer'
+import imagemin from 'imagemin'
+import imageminMozjpeg from 'imagemin-mozjpeg'
+import imageminPngquant from 'imagemin-pngquant'
+import imageminJpegRecompress from 'imagemin-jpeg-recompress'
 
 import User from '../Models/User.js'
 
@@ -9,7 +15,8 @@ const storage = multer.diskStorage({
         cb(null, './uploads')
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname + '-' + Date.now() + '.' + file.originalname.split('.').slice(-1))
+        console.log(req.body)
+        cb(null, `${req.body.uid}-${Date.now()}.${req.body.imgName}`)
     }
 })
 const upload = multer({ dest: 'uploads/', storage: storage })
@@ -17,6 +24,14 @@ const upload = multer({ dest: 'uploads/', storage: storage })
 router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res, next) => {
     try {
         await User.findOneAndUpdate({ uid: req.body.uid }, { customProfilePic: req.file.path })
+        // console.log(req.file.size)
+        await imagemin([req.file.path], {
+            plugins: [imageminJpegRecompress({ quality: 50 }),
+            imageminPngquant({
+                quality: [0.5, 0.6],
+            }),],
+            destination: './uploads/',
+        })
     }
     catch (err) {
         console.log(err)
@@ -31,6 +46,24 @@ router.post('/getUser', async (req, res) => {
     catch (err) {
         console.log('error in getUser', err)
         res.status(404).send(err)
+    }
+})
+router.get('/getPhotoURL/:uid', async (req, res) => {
+    const allFileNames = fs.readdirSync('./uploads/')
+    let fileName = ''
+    for (let i = allFileNames.length - 1; i >= 0; i--) {
+        if (allFileNames[i].includes(req.params.uid)) {
+            fileName = allFileNames[i]
+            break
+        }
+    }
+    console.log('getPhotoURL', req.params.uid)
+    // console.log(fileName)
+    try {
+        res.sendFile(fileName, { root: './uploads/' })
+    } catch (err) {
+        // console.log(err)
+        res.status(404).send({ error: 'no profile picture found' })
     }
 })
 router.post('/changeStatus', async (req, res) => {

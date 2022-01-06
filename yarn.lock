@@ -181,7 +181,7 @@ bin-version@^3.0.0:
     execa "^1.0.0"
     find-versions "^3.0.0"
 
-bin-wrapper@^4.0.0, bin-wrapper@^4.0.1:
+bin-wrapper@^4.0.0, bin-wrapper@^4.0.1, bin-wrapper@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/bin-wrapper/-/bin-wrapper-4.1.0.tgz#99348f2cf85031e3ef7efce7e5300aeaae960605"
   integrity sha512-hfRmo7hWIXPkbpi0ZltboCMVrU+0ClXR/JgbCKKjlDjQf6igXa7OwdqNcFWQZPZTgiY7ZpzE3+LjjkLiTN2T7Q==
@@ -1181,6 +1181,15 @@ ignore@^5.1.8:
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.2.0.tgz#6d3bac8fa7fe0d45d9f9be7bac2fc279577e345a"
   integrity sha512-CmxgYGiEPCLhfLnpPp1MoRmifwEIOgjcHXxOBjv7mY96c+eWScsOP9c112ZyLdWHi0FxHjI+4uVhKYp/gcdRmQ==
 
+imagemin-jpeg-recompress@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/imagemin-jpeg-recompress/-/imagemin-jpeg-recompress-7.0.0.tgz#1c7e2df3c492a6b3374696f7bd94813419b87996"
+  integrity sha512-8bO1I6Xncw82i1drrLL/IemZfdD8+oZImUFzMffHUP4YrvyJZpbS8QTC95yIQuuA0NLWDaGuB93sGN8z4T3DnA==
+  dependencies:
+    exec-buffer "^3.0.0"
+    is-jpg "^2.0.0"
+    jpeg-recompress-bin "^5.0.0"
+
 imagemin-jpegtran@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/imagemin-jpegtran/-/imagemin-jpegtran-7.0.0.tgz#7728f84876362d489b9a1656e0cc8e2009406e6f"
@@ -1393,6 +1402,14 @@ isurl@^1.0.0-alpha5:
   dependencies:
     has-to-string-tag-x "^1.2.0"
     is-object "^1.0.1"
+
+jpeg-recompress-bin@^5.0.0:
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/jpeg-recompress-bin/-/jpeg-recompress-bin-5.1.2.tgz#40ed26ec987bc84b63aaf4420a56de667e7dcb6e"
+  integrity sha512-JjR7+gqmw1D1jYgicMpRi+t/Si13+xOMDuvYRSQFMkrKmnOwTqti+9U9ZHrbUnXjrulqK9Sjjq/Hn8E9UnOFpA==
+  dependencies:
+    bin-build "^3.0.0"
+    bin-wrapper "^4.1.0"
 
 jpegtran-bin@^5.0.0:
   version "5.0.2"
