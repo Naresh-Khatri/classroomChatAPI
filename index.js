@@ -4,9 +4,10 @@ const app = express()
 import http from 'http'
 const HttpServer = http.createServer(app)
 import mongoose from 'mongoose'
+import morgan from 'morgan'
+import chalk from 'chalk'
 
 import 'dotenv/config'
-
 
 import ChatModel from './Models/ChatMessage.js'
 import User from './Models/User.js'
@@ -19,7 +20,7 @@ const io = new Server(HttpServer, {
         origin: "*",
         methods: ["GET", "POST"]
     },
-    transports: ['websocket']
+    // transports: ['websocket']
 })
 const PORT = process.env.PORT || 3000
 
@@ -42,22 +43,40 @@ app.use((req, res, next) => {
     next()
 })
 app.use(express.json())
+app.use(
+    morgan(function (tokens, req, res) {
+        var parenRegExp = /\(([^)]+)\)/;
+        // let currTime = new Date(new Date(tokens.date(req, res, 'web')).getTime())
+        let currTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
+        let deviceInfo
+        try {
+            deviceInfo = parenRegExp.exec(tokens['user-agent'](req, res))[0]
+        } catch (err) {
+            deviceInfo = tokens['user-agent'](req, res) + "dunno 🤔"
+        }
+        return [
+            '👉',
+            tokens.method(req, res) === 'POST' ?
+                chalk.yellow(tokens.method(req, res)) :
+                chalk.green(tokens.method(req, res)),
+            tokens.status(req, res) > 400 ?
+                chalk.bgRed(tokens.status(req, res)) :
+                chalk.bgGreen(tokens.status(req, res)),
+            // chalk.bgBlueBright('⏳' + tokens.res(req, res, 'total-time'), '-'),
+            // chalk.bgBlueBright("⏰" + currTime.split(',')[1]),
+            // chalk.bgRedBright("📱" + deviceInfo),
+            chalk.bgBlue("🔗" + tokens.url(req, res)),
+            // chalk.bgBlueBright(tokens.referrer(req, res) ==
+            //   'https://naresh-khatri.github.io/JNTUA-result-analyser-spa/' ?
+            //   "🧾 " + "Homepage" : "🧾 " + tokens.referrer(req, res)),
+            // chalk.bgCyan("📦" + tokens.res(req, res, 'content-length')),
+            // "⚡ " +
+            chalk.greenBright(tokens['response-time'](req, res), 'ms')
+        ].join(' ')
+    })
+)
 app.use('/user', userRoutes)
 //save user to DB
-app.post('/register', async (req, res) => {
-    // const { uid, username, email, emailVerified, phone, photoUrl, localId, metadata, disabled, providerData } = req.body
-    const user = new User(req.body)
-    try {
-        await user.save()
-        console.log('user saved ', user)
-        res.send(user)
-    } catch (err) {
-        if (err.code == 11000)
-            res.status(400).send('User already exists')
-        else
-            res.status(500).send(err)
-    }
-})
 
 const msgsData = []
 

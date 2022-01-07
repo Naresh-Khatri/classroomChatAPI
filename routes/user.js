@@ -21,9 +21,26 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ dest: 'uploads/', storage: storage })
 
+router.post('/register', async (req, res) => {
+    console.log('registering user')
+    const user = new User(req.body)
+    try {
+        await user.save()
+        console.log('user saved ', user)
+        res.send(user)
+    } catch (err) {
+        if (err.code == 11000)
+            res.status(200).send('User already exists')
+        else
+            res.status(500).send(err)
+    }
+})
+
+
+
 router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res, next) => {
     try {
-        await User.findOneAndUpdate({ uid: req.body.uid }, { customProfilePic: req.file.path })
+        await User.findOneAndUpdate({ uid: req.body.uid }, { customProfilePic: true })
         // console.log(req.file.size)
         await imagemin([req.file.path], {
             plugins: [imageminJpegRecompress({ quality: 50 }),
