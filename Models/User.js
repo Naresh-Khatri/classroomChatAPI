@@ -25,7 +25,7 @@ const userSchema = mongoose.Schema({
     },
     badges: [],
     interests: [],
-    customProfilePic: String,
+    customProfilePic: Boolean,
 })
 
 // module.exports = mongoose.model('User', userSchema)
