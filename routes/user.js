@@ -1,9 +1,12 @@
 import fs from 'fs'
+import path from 'path'
 
 import express from 'express'
 import multer from 'multer'
+import sharp from 'sharp'
+import isJpg from 'is-jpg'
 import imagemin from 'imagemin'
-import imageminMozjpeg from 'imagemin-mozjpeg'
+import mozjpeg from "imagemin-mozjpeg";
 import imageminPngquant from 'imagemin-pngquant'
 import imageminJpegRecompress from 'imagemin-jpeg-recompress'
 
@@ -12,14 +15,20 @@ import User from '../Models/User.js'
 const router = express.Router()
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, './uploads')
+        const uploadPath = path.join('./uploads/', req.body.uid)
+        fs.mkdirSync(uploadPath, { recursive: true }, (err) => {
+            if (err)
+                console.log('couldnt mkdir: ', err)
+        })
+
+        cb(null, uploadPath)
     },
     filename: (req, file, cb) => {
         console.log(req.body)
         cb(null, `${req.body.uid}-${Date.now()}.${req.body.imgName}`)
     }
 })
-const upload = multer({ dest: 'uploads/', storage: storage })
+const upload = multer({ storage: storage })
 
 router.post('/register', async (req, res) => {
     console.log('registering user')
@@ -40,24 +49,33 @@ router.post('/register', async (req, res) => {
 
 router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res, next) => {
     try {
+        console.log(req.file)
         await User.findOneAndUpdate({ uid: req.body.uid }, { customProfilePic: true })
-        // console.log(req.file.size)
         await imagemin([req.file.path], {
-            plugins: [imageminJpegRecompress({ quality: 50 }),
-            imageminPngquant({
-                quality: [0.5, 0.6],
-            }),],
-            destination: './uploads/',
+            plugins: [
+                //TODO figureout what plugin to use
+                mozjpeg({ quality: 5 }),
+                imageminPngquant({
+                    quality: [0.5, 0.6],
+                })
+            ],
+            destination: './uploads/' + req.body.uid + '/',
         })
+        //create a smaller version of the image
+        await sharp(req.file.path)
+            .resize(400, 400)
+            .jpeg({ mozjpeg: true })
+            .toFile('./uploads/' + req.body.uid + '/' + "400x400px-" + req.file.filename)
+        res.send('done')
     }
     catch (err) {
         console.log(err)
     }
-    res.send('done')
 })
-router.post('/getUser', async (req, res) => {
+router.post('/userData', async (req, res) => {
     try {
         const user = await User.findOne({ uid: req.body.uid })
+        // console.log(user)
         res.send(user)
     }
     catch (err) {
@@ -65,21 +83,21 @@ router.post('/getUser', async (req, res) => {
         res.status(404).send(err)
     }
 })
-router.get('/getPhotoURL/:uid', async (req, res) => {
-    const allFileNames = fs.readdirSync('./uploads/')
-    let fileName = ''
-    for (let i = allFileNames.length - 1; i >= 0; i--) {
-        if (allFileNames[i].includes(req.params.uid)) {
-            fileName = allFileNames[i]
-            break
-        }
-    }
-    console.log('getPhotoURL', req.params.uid)
-    // console.log(fileName)
+router.get('/photoURL/:uid', async (req, res) => {
     try {
-        res.sendFile(fileName, { root: './uploads/' })
+        const allFileNames = fs.readdirSync('./uploads/' + req.params.uid + "/")
+        let fileName = ''
+        for (let i = allFileNames.length - 1; i >= 0; i--) {
+            if (allFileNames[i].includes("400x400px-" + req.params.uid)) {
+                fileName = allFileNames[i]
+                break
+            }
+        }
+        console.log('getPhotoURL', req.params.uid)
+        // console.log(fileName)
+        res.sendFile(fileName, { root: './uploads/' + req.params.uid + '/' })
     } catch (err) {
-        // console.log(err)
+        console.log(err)
         res.status(404).send({ error: 'no profile picture found' })
     }
 })
@@ -109,6 +127,14 @@ router.post('/changeBadges', async (req, res) => {
         }
     })
 })
+
+const convertToJpg = (input) => {
+    if (isJpg(input)) {
+        return input
+    }
+    return sharp(input)
+        .jpeg()
+}
 
 // module.exports = router
 export default router
