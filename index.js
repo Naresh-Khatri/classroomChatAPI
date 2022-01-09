@@ -9,12 +9,12 @@ import chalk from 'chalk'
 
 import 'dotenv/config'
 
-import ChatModel from './Models/ChatMessage.js'
 import User from './Models/User.js'
 
 import userRoutes from './routes/user.js'
 
 import { Server } from 'socket.io'
+import ChatMessage from './Models/ChatMessage.js'
 const io = new Server(HttpServer, {
     cors: {
         origin: "*",
@@ -93,7 +93,7 @@ io.on('connection', async (socket) => {
         appendMsgData(data)
 
         //save received msg in DB then broadcast
-        const newMsg = ChatModel(
+        const newMsg = ChatMessage(
             {
                 user: data.user, name: data.name,
                 text: data.text[0], photoURL: data.photoURL
@@ -131,15 +131,17 @@ function appendMsgData(msgData) {
 }
 
 function getPrevChatData() {
+    console.log(ChatMessage)
     return new Promise((resolve, reject) => {
-        ChatModel
+        ChatMessage
             .find({})
-            .sort({ timestamp: 1 })
+            // .sort({ timestamp: 1 })
             .exec(async (err, result) => {
                 if (err)
                     reject(err)
                 else {
                     // result.slice(-5).map(msg => console.log(msg.timestamp, msg.text))
+                    // console.log('prev msgs',result)
                     resolve(result.slice(-50))
                 }
             })

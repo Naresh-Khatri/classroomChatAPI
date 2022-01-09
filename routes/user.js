@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
+import axios from 'axios'
 import express from 'express'
 import multer from 'multer'
 import sharp from 'sharp'
@@ -85,6 +86,9 @@ router.post('/userData', async (req, res) => {
 })
 router.get('/photoURL/:uid', async (req, res) => {
     try {
+        if (req.params.uid == undefined || req.params.uid == null)
+            res.status(404).send('not found')
+
         const allFileNames = fs.readdirSync('./uploads/' + req.params.uid + "/")
         let fileName = ''
         for (let i = allFileNames.length - 1; i >= 0; i--) {
@@ -93,12 +97,20 @@ router.get('/photoURL/:uid', async (req, res) => {
                 break
             }
         }
-        console.log('getPhotoURL', req.params.uid)
         // console.log(fileName)
         res.sendFile(fileName, { root: './uploads/' + req.params.uid + '/' })
     } catch (err) {
-        console.log(err)
-        res.status(404).send({ error: 'no profile picture found' })
+        // console.log(err)
+        //send the default PhotoURL
+        try {
+            const user = await User.findOne({ uid: req.params.uid })
+            if (user)
+                res.redirect(user.photoURL)
+        }
+        catch (err) {
+            console.log(err)
+            res.status(404).send({ error: 'no profile picture found' })
+        }
     }
 })
 router.post('/changeStatus', async (req, res) => {
