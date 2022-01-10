@@ -25,14 +25,17 @@ const io = new Server(HttpServer, {
 const PORT = process.env.PORT || 3000
 
 mongoose.connect(process.env.DB_CONNECTION,
-    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }, (err) => {
+    {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false,
+        useCreateIndex: true
+    }, (err) => {
         if (err == null)
             console.log('Connceted to DB!')
         else
             console.error(err)
     })
-//hide the deprecation warning
-mongoose.set('useCreateIndex', true);
 
 
 //express middleware
@@ -78,8 +81,6 @@ app.use(
 app.use('/user', userRoutes)
 //save user to DB
 
-const msgsData = []
-
 io.on('connection', async (socket) => {
     console.log('new user ' + socket.id)
     socket.emit('receivePrevMsgsData', await getPrevChatData())
@@ -89,9 +90,6 @@ io.on('connection', async (socket) => {
     })
     //send message
     socket.on('sendMsg', data => {
-        // msgsData.push(data)
-        appendMsgData(data)
-
         //save received msg in DB then broadcast
         const newMsg = ChatMessage(
             {
@@ -110,28 +108,7 @@ HttpServer.listen(PORT, () => {
 })
 
 
-function appendMsgData(msgData) {
-    //logic to append text if last and new msg owners are same
-
-    if (msgsData.length == 0)
-        msgsData.push(msgData)
-    else {
-        if (msgsData[msgsData.length - 1].username == msgData.username) {
-            console.log('same user')
-            msgsData[msgsData.length - 1].text.push(msgData.text[0])
-            msgsData[msgsData.length - 1].time = msgData.time
-            // msgsData.push(msgs)
-        }
-        else {
-            console.log('different user')
-            msgsData.push(msgData)
-        }
-    }
-    console.log(msgsData[msgsData.length - 1])
-}
-
 function getPrevChatData() {
-    console.log(ChatMessage)
     return new Promise((resolve, reject) => {
         ChatMessage
             .find({})
@@ -141,7 +118,6 @@ function getPrevChatData() {
                     reject(err)
                 else {
                     // result.slice(-5).map(msg => console.log(msg.timestamp, msg.text))
-                    // console.log('prev msgs',result)
                     resolve(result.slice(-50))
                 }
             })

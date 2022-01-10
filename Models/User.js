@@ -19,9 +19,24 @@ const userSchema = mongoose.Schema({
     },
     reloadUserInfo: Object,
     providerData: [],
-    status:{
+    status: {
         type: String,
         default: 'online'
+    },
+    collegeInfo: {
+        name: {
+            type: String,
+            default: 'Dr. K.V. Subba Reddy Institute of Technology'
+        },
+        id: {
+            type: String,
+            default: 'KVSRIT'
+        },
+        branch: String,
+        year: String,
+        sem: String,
+        rollNo: String,
+        section: String,
     },
     badges: [],
     interests: [],
