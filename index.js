@@ -9,9 +9,8 @@ import chalk from 'chalk'
 
 import 'dotenv/config'
 
-import User from './Models/User.js'
-
 import userRoutes from './routes/user.js'
+import uploadRoutes from './routes/upload.js'
 
 import { Server } from 'socket.io'
 import ChatMessage from './Models/ChatMessage.js'
@@ -78,7 +77,11 @@ app.use(
         ].join(' ')
     })
 )
+
+//routes
 app.use('/user', userRoutes)
+app.use('/upload', uploadRoutes)
+
 //save user to DB
 
 io.on('connection', async (socket) => {
