@@ -80,7 +80,7 @@ app.use(
 
 //routes
 app.use('/user', userRoutes)
-app.use('/upload', uploadRoutes)
+app.use('/uploads', uploadRoutes)
 
 //save user to DB
 
