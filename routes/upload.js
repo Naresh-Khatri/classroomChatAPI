@@ -13,17 +13,26 @@ const storage = multer.diskStorage({
     cb(null, "uploads/materials");
   },
   filename: (req, file, cb) => {
-    console.log(req.body);
-    cb(null, `${req.body.uid}-${Date.now()}.${req.body.fileName}`);
+    let filename = "";
+    if (file.fieldname === "preview") {
+      filename = `${req.body.uid}-${Date.now()}-${file.originalname}.png`;
+    } else {
+      filename = `${req.body.uid}-preview-${Date.now()}-${file.originalname}`;
+    }
+    cb(null, filename);
   },
 });
 
 const upload = multer({ storage: storage });
 
+router.use(express.static("uploads/"));
+
 //upload attachment
-router.post("/pdf", upload.single("file"), async (req, res) => {
-  console.log(req.file);
-  console.log(req.body);
+const cpUpload = upload.fields([
+  { name: "file", maxCount: 1 },
+  { name: "preview", maxCount: 1 },
+]);
+router.post("/pdf", cpUpload, async (req, res) => {
   //create new study material object
   const studyMaterialInfo = {};
   try {
@@ -32,18 +41,17 @@ router.post("/pdf", upload.single("file"), async (req, res) => {
     studyMaterialInfo.subject = req.body.subject;
     studyMaterialInfo.classroomID = req.body.classroomID;
     studyMaterialInfo.createdUser = req.body.uid;
-    // studyMaterialInfo.classroomID = req.body.classroomID
 
-    // studyMaterialInfo.previewPath = await createPdfPreview(req.file.filename)
-    studyMaterialInfo.fileName = req.file.filename;
-    studyMaterialInfo.fileType = req.file.mimetype.split("/")[1];
-    studyMaterialInfo.fileSize = req.file.size;
-    studyMaterialInfo.filePath = req.file.path;
+    studyMaterialInfo.previewPath = req.files["preview"][0].path;
+    studyMaterialInfo.fileName = req.files["file"][0].filename;
+    studyMaterialInfo.fileType = req.files["file"][0].mimetype.split("/")[1];
+    studyMaterialInfo.fileSize = req.files["file"][0].size;
+    studyMaterialInfo.filePath = req.files["file"][0].path;
     const studyMaterial = new StudyMaterial(studyMaterialInfo);
     studyMaterial.save();
     res.send("pdf uploaded");
   } catch (err) {
-    console.log('error when uploading pdf', err);
+    console.log("error when uploading pdf", err);
     res.status(400).send({ msg: "check your inputs" });
   }
 });
@@ -87,21 +95,5 @@ router.delete("/material/:id", (req, res) => {
 router.get("/", (req, res) => {
   res.send("hello");
 });
-
-// const createPdfPreview = (filename) => {
-//     return new Promise((resolve, reject) => {
-//         console.log('creating preview')
-//         pdf(fs.readFileSync('uploads/materials/' + filename))
-//             .then(data => {
-//                 const path = `uploads/materials/preview-${filename}.jpg`
-//                 data.pipe(fs.createWriteStream(path))
-//                 console.log(path)
-//                 resolve(path)
-//             })
-//             .catch(err => {
-//                 console.log('error in creating preview', err)
-//             })
-//     })
-// }
 
 export default router;
